@@ -31,7 +31,7 @@ doencas =
    , ("Micose de pele", ["Coceira", "Manchas brancas ou vermelhas", "Descamacao", "Rachaduras na pele", "Ardencia"])
    ]
 
-triagem :: Sintomas -> [(Doenca, Int)]
+triagem :: Sintomas -> [(Doenca, Int, Int)]
 triagem = ordena . filtro
 
 limpaSintoma :: String -> String
@@ -41,14 +41,19 @@ limpaListaSintomas :: [String] -> [String]
 limpaListaSintomas [] = []
 limpaListaSintomas (x:xs) = limpaSintoma x : limpaListaSintomas xs
 
-filtro :: Sintomas -> [(Doenca, Int)]
+filtro :: Sintomas -> [(Doenca, Int, Int)]
 filtro sintomasDoPaciente = 
-   [(doenca, length (filter (`elem` sintomasPacienteLimpos) sintomasDoencaLimpos)) 
+   let sintomasPacienteLimpos = limpaListaSintomas sintomasDoPaciente
+   in [(doenca, qnt, percentual qnt total) 
    | (doenca, sintomasDoenca) <- doencas
    , let sintomasDoencaLimpos = limpaListaSintomas sintomasDoenca
-   , let sintomasPacienteLimpos = limpaListaSintomas sintomasDoPaciente
-   , any (`elem` sintomasPacienteLimpos) sintomasDoencaLimpos
+         qnt = length (filter (`elem` sintomasPacienteLimpos) sintomasDoencaLimpos)
+         total = length sintomasDoencaLimpos
+   , qnt > 0
    ]
 
-ordena :: [(Doenca, Int)] -> [(Doenca, Int)]
-ordena = sortBy (comparing (Down . snd))
+ordena :: [(Doenca, Int, Int)] -> [(Doenca, Int , Int)]
+ordena = sortBy (comparing (\(_, _, p) -> Down p))
+
+percentual :: Int -> Int -> Int
+percentual qnt total = (qnt * 100) `div` total
