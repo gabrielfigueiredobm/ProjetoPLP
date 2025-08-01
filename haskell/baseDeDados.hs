@@ -36,7 +36,7 @@ saida sintomas = putStr (formataSaida (triagem sintomas))
 
 formataSaida :: [(Doenca, Int, Int)] -> String
 formataSaida resultado = 
-   unlines [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "%" | (doenca, qnt, pct) <- resultado]
+   concat [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "%\n" | (doenca, qnt, pct) <- resultado]
 
 sufixo :: Int -> String
 sufixo 1 = ""
