@@ -43,7 +43,7 @@ sufixo 1 = ""
 sufixo _ = "s"
 
 triagem :: Sintomas -> [(Doenca, Int, Int)]
-triagem = ordena . filtro
+triagem sintomas = ordena (filtro sintomas)
 
 filtro :: Sintomas -> [(Doenca, Int, Int)]
 filtro sintomasDoPaciente = 
