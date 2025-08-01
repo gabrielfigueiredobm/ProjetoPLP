@@ -31,8 +31,8 @@ doencas =
    , ("Micose de pele", ["Coceira", "Manchas brancas ou vermelhas", "Descamacao", "Rachaduras na pele", "Ardencia"])
    ]
 
-saida :: Sintomas -> String
-saida sintomas = formataSaida (triagem sintomas)
+saida :: Sintomas -> IO()
+saida sintomas = putStr (formataSaida (triagem sintomas))
 
 formataSaida :: [(Doenca, Int, Int)] -> String
 formataSaida resultado = 
