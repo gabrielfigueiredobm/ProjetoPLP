@@ -57,3 +57,14 @@ ordena = sortBy (comparing (\(_, _, p) -> Down p))
 
 percentual :: Int -> Int -> Int
 percentual qnt total = (qnt * 100) `div` total
+
+formataSaida :: [(Doenca, Int, Int)] -> String
+formataSaida resultado = 
+   unlines [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "%" | (doenca, qnt, pct) <- resultado]
+
+sufixo :: Int -> String
+sufixo 1 = ""
+sufixo _ = "s"
+
+saida :: Sintomas -> String
+saida sintomas = formataSaida (triagem sintomas)
