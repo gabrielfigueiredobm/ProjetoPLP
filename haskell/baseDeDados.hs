@@ -31,15 +31,19 @@ doencas =
    , ("Micose de pele", ["Coceira", "Manchas brancas ou vermelhas", "Descamacao", "Rachaduras na pele", "Ardencia"])
    ]
 
+saida :: Sintomas -> String
+saida sintomas = formataSaida (triagem sintomas)
+
+formataSaida :: [(Doenca, Int, Int)] -> String
+formataSaida resultado = 
+   unlines [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "%" | (doenca, qnt, pct) <- resultado]
+
+sufixo :: Int -> String
+sufixo 1 = ""
+sufixo _ = "s"
+
 triagem :: Sintomas -> [(Doenca, Int, Int)]
 triagem = ordena . filtro
-
-limpaSintoma :: String -> String
-limpaSintoma = map toLower . filter (/= ' ')
-
-limpaListaSintomas :: [String] -> [String]
-limpaListaSintomas [] = []
-limpaListaSintomas (x:xs) = limpaSintoma x : limpaListaSintomas xs
 
 filtro :: Sintomas -> [(Doenca, Int, Int)]
 filtro sintomasDoPaciente = 
@@ -52,19 +56,15 @@ filtro sintomasDoPaciente =
    , qnt > 0
    ]
 
+limpaSintoma :: String -> String
+limpaSintoma = map toLower . filter (/= ' ')
+
+limpaListaSintomas :: [String] -> [String]
+limpaListaSintomas [] = []
+limpaListaSintomas (x:xs) = limpaSintoma x : limpaListaSintomas xs
+
 ordena :: [(Doenca, Int, Int)] -> [(Doenca, Int , Int)]
 ordena = sortBy (comparing (\(_, _, p) -> Down p))
 
 percentual :: Int -> Int -> Int
 percentual qnt total = (qnt * 100) `div` total
-
-formataSaida :: [(Doenca, Int, Int)] -> String
-formataSaida resultado = 
-   unlines [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "%" | (doenca, qnt, pct) <- resultado]
-
-sufixo :: Int -> String
-sufixo 1 = ""
-sufixo _ = "s"
-
-saida :: Sintomas -> String
-saida sintomas = formataSaida (triagem sintomas)
