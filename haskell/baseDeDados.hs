@@ -3,15 +3,13 @@ module BasesDeDados (doencas, triagem) where
 import Data.List (sortBy)
 import Data.Ord (comparing, Down(..))
 import Data.Char (toLower)
+import Haskell.Usuarios
 
 type Doenca = String
 type Sintomas = [String]
 
-Data Mensagem = Mensagem {
-	remetente :: Usuario
-	destinatario :: Usuario
-	texto :: String
-} deriving (Show)
+data Mensagem = Mensagem {remetente :: Usuario, destinatario :: Usuario, texto :: String} 
+   deriving (Show)
 
 type Caixa = [Mensagem]
 
