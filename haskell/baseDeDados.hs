@@ -7,6 +7,14 @@ import Data.Char (toLower)
 type Doenca = String
 type Sintomas = [String]
 
+Data Mensagem = Mensagem {
+	remetente :: Usuario
+	destinatario :: Usuario
+	texto :: String
+} deriving (Show)
+
+type Caixa = [Mensagem]
+
 doencas :: [(Doenca, Sintomas)]
 doencas = 
    [ ("Gripe", ["Febre alta", "Tosse", "Dor no corpo", "Cansaco", "Fraqueza"])
@@ -68,3 +76,17 @@ ordena = sortBy (comparing (\(_, _, p) -> Down p))
 
 percentual :: Int -> Int -> Int
 percentual qnt total = (qnt * 100) `div` total
+
+enviarMensagem :: Usuario -> Usuario -> String -> Caixa -> Caixa
+enviarMensagem remetente destinatario texto caixa = caixa ++ [Mensagem remetente destinatario texto]
+    
+verMensagens :: Caixa -> IO()
+verMensagens ((Mensagem _ _ texto):t) = do
+	putStrLn texto
+	verMensagens t
+verMensagens [] = return ()
+	
+apagarMensagem :: Caixa -> Int -> Caixa
+apagarMensagem caixa i = 
+	let (antes, depois) = splitAt i caixa
+	in antes ++ drop 1 depois
