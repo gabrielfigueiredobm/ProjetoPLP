@@ -1,25 +1,25 @@
-PROPOSTA DE PROJETO
+# PROPOSTA DE PROJETO
 
-Participantes: Gabriel Figueiredo, Pedro Inocêncio e Kaiky Magno
+## Participantes: Gabriel Figueiredo, Pedro Inocêncio e Kaiky Magno
 
-Resumo do sistema
+### Resumo do sistema
 
-Objetivo
+### Objetivo
    Desenvolver um sistema de telemedicina, capaz de auxiliar o paciente a diagnosticar infecções virais, bacterianas e fúngicas, utilizando como entrada os sintomas digitados pelo paciente que posterior ao envio passarão pela triagem para tratamento desses dados e logo após, envio para o médico responsável pelo atendimento de tal paciente.
 
-Fluxo geral
-Login
+### Fluxo geral
+#### Login
    O usuário informa primeiramente se vai logar num perfil de médico ou de paciente.
 
-Entrada de dados
+#### Entrada de dados
    O paciente informa todos os seus sintomas manualmente no sistema (por exemplo: febre, dor de cabeça, cansaço etc.).
 
 
-Filtragem inicial
+#### Filtragem inicial
    O sistema recebe os sintomas e faz uma filtragem (ex.: remove repetições, padroniza nomes, ignora informações irrelevantes) e passa para a classe de triagem, responsável pelo cálculo das probabilidades e pela documentação geral da triagem para posterior chegada até o médico responsável.
 
 
-Processamento e diagnóstico
+#### Processamento e diagnóstico
 O sistema compara os sintomas com o armazenamento de doenças que contém:
 
 * Lista de doenças (virais, bacterianas, fúngicas)
@@ -32,20 +32,20 @@ O sistema compara os sintomas com o armazenamento de doenças que contém:
    Ele calcula a chance (probabilidade) de o paciente ter cada uma das doenças cadastradas, quanto mais o paciente se aproximar do total de sintomas de uma doença, maior será a probabilidade do paciente estar com tal doença.
 
 
-Auxílio ao médico responsável
+#### Auxílio ao médico responsável
 O sistema mostra ao médico os percentuais calculados.
 
 A partir disso, o médico vai saber que tratamento sugerir.
 
 
-Caixa de Mensagem
+#### Caixa de Mensagem
    Após o diagnóstico da possível doença por parte do sistema e o encaminhamento ao médico especialista, será criada uma caixa de mensagem para os pacientes e médicos, como uma espécie de e-mail, onde eles poderão se comunicar entre si. 
-Armazenamento 
+#Armazenamento 
 Todas as doenças, sintomas e medidas preventivas ficam armazenados em uma estrutura de dados.
 
 
-Possível estrutura técnica
-Classes ou módulos principais
+### Possível estrutura técnica
+#### Classes ou módulos principais
 
 * Usuários: Médico ou Paciente
 
@@ -54,7 +54,7 @@ Classes ou módulos principais
 * Doença: contém nome, tipo (viral, bacteriana, fúngica), lista de sintomas, medidas profiláticas.
 
 
-Funcionalidades principais
+### Funcionalidades principais
 
 * Entrada e armazenamento dos sintomas.
 
