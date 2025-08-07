@@ -1,17 +1,19 @@
-module BasesDeDados (doencas, triagem) where
+module Triagem (
+  doencas,
+  triagem,
+  saida,
+  limpaSintoma,
+  limpaListaSintomas,
+  formataSaida,
+  Doenca
+) where
 
-import Data.List (sortBy)
+import Data.List (nub, intercalate, sortBy)
 import Data.Ord (comparing, Down(..))
-import Data.Char (toLower)
-import Haskell.Usuarios
+import Data.Char (isSpace, toLower)
 
 type Doenca = String
 type Sintomas = [String]
-
-data Mensagem = Mensagem {remetente :: Usuario, destinatario :: Usuario, texto :: String} 
-   deriving (Show)
-
-type Caixa = [Mensagem]
 
 doencas :: [(Doenca, Sintomas)]
 doencas = 
@@ -74,17 +76,3 @@ ordena = sortBy (comparing (\(_, _, p) -> Down p))
 
 percentual :: Int -> Int -> Int
 percentual qnt total = (qnt * 100) `div` total
-
-enviarMensagem :: Usuario -> Usuario -> String -> Caixa -> Caixa
-enviarMensagem remetente destinatario texto caixa = caixa ++ [Mensagem remetente destinatario texto]
-    
-verMensagens :: Caixa -> IO()
-verMensagens ((Mensagem _ _ texto):t) = do
-	putStrLn texto
-	verMensagens t
-verMensagens [] = return ()
-	
-apagarMensagem :: Caixa -> Int -> Caixa
-apagarMensagem caixa i = 
-	let (antes, depois) = splitAt i caixa
-	in antes ++ drop 1 depois
