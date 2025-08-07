@@ -1,4 +1,4 @@
-module Haskell.Usuarios (
+module Usuarios (
    Usuario(..),
    getNome,
    getMensagens

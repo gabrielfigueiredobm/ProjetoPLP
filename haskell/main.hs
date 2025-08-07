@@ -1,6 +1,6 @@
 module Main where
 
-import Haskell.Usuarios (Usuario(..), getNome)
+import Usuarios (Usuario(..), getNome)
 import Mensagem (Mensagem(..))
 
 import Triagem as T

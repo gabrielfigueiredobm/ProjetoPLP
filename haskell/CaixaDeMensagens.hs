@@ -4,7 +4,7 @@ module CaixaDeMensagens (
     apagarMensagem
 ) where
 
-import Haskell.Usuarios (Usuario(..), getNome)
+import Usuarios (Usuario(..), getNome)
 import Mensagem (Mensagem(..))
 
 enviarMensagem :: Usuario -> Usuario -> String -> [Mensagem] -> [Mensagem]
