@@ -1,6 +1,6 @@
 module Main where
 
-import Usuarios (Usuario(..), getNome, getSenha, getEspecialidade)
+import Usuarios (Usuario(..), getNome, getSenha, getEspecialidade, getUsername)
 import Mensagem (Mensagem(..))
 
 import Triagem as T
@@ -23,7 +23,7 @@ lerSintomas :: IO [String]
 lerSintomas = do
   putStrLn "Digite os sintomas separados por vírgula (exemplo: Febre, Tosse):"
   putStrLn "Sintomas possíveis:"
-  putStrLn $ intercalate ", " listaSintomasDisponiveis
+  putStrLn (formatarListaSintomas listaSintomasDisponiveis)
   line <- getLine
   let sintomas = map (trim) $ splitOn ',' line
   return sintomas
@@ -36,8 +36,20 @@ splitOn c s =
        [] -> []
        (_:rest) -> splitOn c rest
 
+formatarListaSintomas :: [String] -> String
+formatarListaSintomas [] = ""
+formatarListaSintomas sintomas = 
+  intercalate "\n" $ map formataLinha (chunksOf 5 sintomas)
+    where
+      formataLinha :: [String] -> String
+      formataLinha linha = ". " ++ (intercalate ", " linha)
+
+      chunksOf :: Int -> [a] -> [[a]]
+      chunksOf _ [] = []
+      chunksOf n xs = take n xs : chunksOf n (drop n xs)
+
 encontrarUsuario :: String -> [Usuario] -> Maybe Usuario
-encontrarUsuario nome = find (\u -> getNome u == nome)
+encontrarUsuario nome = find (\u -> getUsername u == nome)
 
 cadastrarPaciente :: IO Usuario
 cadastrarPaciente = do
@@ -74,6 +86,37 @@ enviarMensagemParaCaixa remetente destinatario caixa = do
   let novaCaixa = CM.enviarMensagem remetente destinatario texto caixa
   putStrLn $ "Mensagem enviada para " ++ getNome destinatario ++ ": " ++ texto
   return novaCaixa
+
+usernameJaExiste :: String -> [Usuario] -> Bool
+usernameJaExiste usernameDesejado usuarios =
+  any (\u -> getUsername u == usernameDesejado) usuarios
+
+senhaJaExiste :: String -> [Usuario] -> Bool
+senhaJaExiste senhaDesejada usuarios =
+  any (\u -> getSenha u == senhaDesejada) usuarios
+
+validarUsuario :: Usuario -> [Usuario] -> IO (Maybe Usuario)
+validarUsuario usuario usuarios = do
+  if usernameJaExiste (getUsername usuario) usuarios
+    then do
+      putStrLn "Este nome de usuário já está em uso. Por favor, escolha outro."
+      putStr "Novo username: "
+      novoUsername <- getLine
+      validarUsuario (usuario { username = novoUsername }) usuarios
+    else if senhaJaExiste (getSenha usuario) usuarios
+      then do
+        putStrLn "Esta senha já está em uso. Por favor, escolha outra."
+        putStr "Nova senha: "
+        novaSenha <- getLine
+        validarUsuario (usuario { senha = novaSenha }) usuarios
+      else do
+        putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
+        return (Just usuario)
+
+processarCadastro :: String -> [Usuario] -> IO (Maybe Usuario)
+processarCadastro tipo usuarios = do
+  novoUsuario <- if tipo == "Paciente" then cadastrarPaciente else cadastrarMedico
+  validarUsuario novoUsuario usuarios
 
 menuMensagensPaciente :: Usuario -> [Mensagem] -> [Usuario] -> IO ([Usuario], [Mensagem])
 menuMensagensPaciente usuario caixa usuarios = do
@@ -125,7 +168,7 @@ menuMensagensPaciente usuario caixa usuarios = do
           menuMensagensPaciente usuario caixa usuarios
         else do
           putStrLn "Escolha o destinatario médico digitando o número correspondente:"
-          mapM_ (\(i,u) -> putStrLn $ show i ++ " - " ++ getNome u ++ " (" ++ getEspecialidade u ++ ") ") (zip [1..] medicos)
+          mapM_ (\(i,u) -> putStrLn $ show i ++ " - " ++ getNome u ++ " - Especialidade: " ++ getEspecialidade u ++ ".") (zip [1..] medicos)
           putStr "Opção: "
           op <- getLine
           let maybeIndice = reads op :: [(Int, String)]
@@ -144,10 +187,13 @@ menuMensagensPaciente usuario caixa usuarios = do
       putStrLn "Opção inválida, tente novamente."
       menuMensagensPaciente usuario caixa usuarios
 
+iniciarMenuPaciente :: Usuario -> [Mensagem] -> [Usuario] -> IO ([Usuario], [Mensagem])
+iniciarMenuPaciente usuario caixa usuarios = do
+  putStrLn $ "\nBem-vindo(a), " ++ getNome usuario ++ "!"
+  menuPaciente usuario caixa usuarios
 
 menuPaciente :: Usuario -> [Mensagem] -> [Usuario] -> IO ([Usuario], [Mensagem])
 menuPaciente usuario caixa usuarios = do
-  putStrLn $ "\nBem-vindo(a), " ++ getNome usuario ++ "!"
   putStrLn "Escolha uma opção:"
   putStrLn "1 - Fazer triagem (informar sintomas)"
   putStrLn "2 - Gerenciar mensagens"
@@ -172,9 +218,13 @@ menuPaciente usuario caixa usuarios = do
       putStrLn "Opção inválida, tente novamente."
       menuPaciente usuario caixa usuarios
 
+iniciarMenuMedico :: Usuario -> [Mensagem] -> [Usuario] -> IO ([Usuario], [Mensagem])
+iniciarMenuMedico usuario caixa usuarios = do
+  putStrLn $ "\nBem-vindo(a), Dr(a). " ++ getNome usuario ++ "!"
+  menuMedico usuario caixa usuarios
+
 menuMedico :: Usuario -> [Mensagem] -> [Usuario] -> IO ([Usuario], [Mensagem])
 menuMedico usuario caixa usuarios = do
-  putStrLn $ "\nBem-vindo(a), Dr(a). " ++ getNome usuario ++ "!"
   putStrLn "Escolha uma opção:"
   putStrLn "1 - Ver caixa de mensagens"
   putStrLn "2 - Responder a uma mensagem"
@@ -211,7 +261,7 @@ menuMedico usuario caixa usuarios = do
                         putStrLn "---------------------------------------------"
                     novaCaixa <- enviarMensagemParaCaixa usuario paciente caixa
                     menuMedico usuario novaCaixa usuarios
-                Just medico -> do
+                Just _ -> do
                     putStrLn "Erro: Remetente é um médico, não um paciente."
                     menuMedico usuario caixa usuarios
                 Nothing -> do
@@ -248,13 +298,19 @@ main = loop [] []
           tipo <- getLine
           case tipo of
             "1" -> do
-              novoUsuario <- cadastrarPaciente
-              putStrLn $ "Usuário " ++ getNome novoUsuario ++ " cadastrado com sucesso!"
-              loop (novoUsuario : usuarios) caixa
+              maybeNovoUsuario <- processarCadastro "Paciente" usuarios
+              case maybeNovoUsuario of
+                Just novoUsuario -> do
+                  loop (novoUsuario : usuarios) caixa
+                Nothing -> do
+                  loop usuarios caixa
             "2" -> do
-              novoUsuario <- cadastrarMedico
-              putStrLn $ "Usuário " ++ getNome novoUsuario ++ " cadastrado com sucesso!"
-              loop (novoUsuario : usuarios) caixa
+              maybeNovoUsuario <- processarCadastro "Medico" usuarios
+              case maybeNovoUsuario of
+                Just novoUsuario -> do
+                  loop (novoUsuario : usuarios) caixa
+                Nothing -> do
+                  loop usuarios caixa
             _ -> do
               putStrLn "Opção inválida. Retornando ao menu principal sem cadastro."
               loop usuarios caixa
@@ -270,8 +326,8 @@ main = loop [] []
                 then do
                   putStrLn $ "Login bem-sucedido como " ++ getNome usuario
                   (novosUsuarios, novaCaixa) <- case usuario of
-                    Paciente{} -> menuPaciente usuario caixa usuarios
-                    Medico{} -> menuMedico usuario caixa usuarios
+                    Paciente{} -> iniciarMenuPaciente usuario caixa usuarios
+                    Medico{} -> iniciarMenuMedico usuario caixa usuarios
                   loop novosUsuarios novaCaixa
               else do
                  putStrLn "Senha incorreta."

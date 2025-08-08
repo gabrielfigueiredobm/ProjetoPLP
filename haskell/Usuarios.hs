@@ -3,7 +3,8 @@ module Usuarios (
    getNome,
    getMensagens,
    getSenha,
-   getEspecialidade
+   getEspecialidade,
+   getUsername
 ) where
 
 import Mensagem (Mensagem)
@@ -31,6 +32,10 @@ data Usuario
 
 getNome :: Usuario -> String
 getNome = nome
+
+getUsername :: Usuario -> String
+getUsername (Paciente _ _ username _ _ _) = username
+getUsername (Medico _ _ username _ _ _ _) = username
 
 getMensagens :: Usuario -> [Mensagem]
 getMensagens = mensagens
