@@ -273,8 +273,8 @@ menuMedico usuario caixa usuarios = do
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
-  usuarios <- carregarUsuarios "../database/usuarios.txt"
-  caixa    <- carregarMensagens "../database/mensagens.txt"
+  usuarios <- carregarUsuarios "database/usuarios.txt"
+  caixa    <- carregarMensagens "database/mensagens.txt"
   loop usuarios caixa
   where
     loop :: [Usuario] -> [Mensagem] -> IO ()
@@ -300,7 +300,7 @@ main = do
                 Just novoUsuario -> do
                   let novaLista = novoUsuario : usuarios
                   -- Salva após cadastro para não perder dados em caso de encerramento inesperado
-                  salvarUsuarios "../database/usuarios.txt" novaLista
+                  salvarUsuarios "database/usuarios.txt" novaLista
                   loop novaLista caixa
                 Nothing -> loop usuarios caixa
             "2" -> do
@@ -308,7 +308,7 @@ main = do
               case maybeNovoUsuario of
                 Just novoUsuario -> do
                   let novaLista = novoUsuario : usuarios
-                  salvarUsuarios "../database/usuarios.txt" novaLista
+                  salvarUsuarios "database/usuarios.txt" novaLista
                   loop novaLista caixa
                 Nothing -> loop usuarios caixa
             _ -> do
@@ -339,8 +339,8 @@ main = do
 
         "3" -> do
           -- Salva tudo uma única vez antes de sair
-          salvarUsuarios "../database/usuarios.txt" usuarios
-          salvarMensagens "../database/mensagens.txt" caixa
+          salvarUsuarios "database/usuarios.txt" usuarios
+          salvarMensagens "database/mensagens.txt" caixa
           putStrLn "Encerrando o sistema. Até logo!"
 
         _ -> do
