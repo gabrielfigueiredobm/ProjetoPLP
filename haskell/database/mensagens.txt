@@ -1,1 +1,1 @@
-[]
+[Mensagem {remetente = "Pedro", destinatario = "Maria", texto = "sd;klfjngbwerg"},Mensagem {remetente = "Maria", destinatario = "Pedro", texto = "sldertngertg"}]

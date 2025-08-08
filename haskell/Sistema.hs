@@ -160,7 +160,10 @@ menuMensagensPaciente usuario caixa usuarios = do
     "1" -> do
       putStrLn "Caixa de mensagens recebidas:"
       let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
-      mapM_ putStrLn (CM.verMensagens recebidas)
+      if null recebidas
+        then putStrLn "Nenhuma mensagem na caixa de entrada"
+        else mapM_ putStrLn (CM.verMensagens recebidas)
+      putStrLn ""
       menuMensagensPaciente usuario caixa usuarios
     "2" -> do
       let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
@@ -273,7 +276,7 @@ iniciarMenuMedico usuario caixa usuarios = do
 
 menuMedico :: Usuario -> [Mensagem] -> [Usuario] -> IO ([Usuario], [Mensagem])
 menuMedico usuario caixa usuarios = do
-  putStrLn "Escolha uma opção:"
+  putStrLn "\nEscolha uma opção:"
   putStrLn "1 - Ver caixa de mensagens"
   putStrLn "2 - Responder a uma mensagem"
   putStrLn "3 - Apagar uma mensagem"
@@ -284,7 +287,10 @@ menuMedico usuario caixa usuarios = do
     "1" -> do
       putStrLn "Caixa de mensagens recebidas:"
       let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
-      mapM_ putStrLn (CM.verMensagens recebidas)
+      if null recebidas
+        then putStrLn "Nenhuma mensagem na caixa de entrada."
+        else mapM_ putStrLn (CM.verMensagens recebidas)
+      putStrLn ""
       menuMedico usuario caixa usuarios
     "2" -> do
       let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
