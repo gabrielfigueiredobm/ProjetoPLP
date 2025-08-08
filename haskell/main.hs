@@ -1,6 +1,6 @@
 module Main where
 
-import Usuarios (Usuario(..), getNome)
+import Usuarios (Usuario(..), getNome, getSenha, getEspecialidade)
 import Mensagem (Mensagem(..))
 
 import Triagem as T
@@ -61,9 +61,11 @@ cadastrarMedico = do
   crm <- getLine
   putStr "Username: "
   username <- getLine
+  putStr "Especialidade: "
+  especialidade <- getLine
   putStr "Senha: "
   senha <- getLine
-  return $ Medico nome crm username senha [] []
+  return $ Medico nome crm username especialidade senha [] []
 
 enviarMensagemParaCaixa :: Usuario -> Usuario -> [Mensagem] -> IO [Mensagem]
 enviarMensagemParaCaixa remetente destinatario caixa = do
@@ -123,7 +125,7 @@ menuMensagensPaciente usuario caixa usuarios = do
           menuMensagensPaciente usuario caixa usuarios
         else do
           putStrLn "Escolha o destinatario médico digitando o número correspondente:"
-          mapM_ (\(i,u) -> putStrLn $ show i ++ " - " ++ getNome u) (zip [1..] medicos)
+          mapM_ (\(i,u) -> putStrLn $ show i ++ " - " ++ getNome u ++ " (" ++ getEspecialidade u ++ ") ") (zip [1..] medicos)
           putStr "Opção: "
           op <- getLine
           let maybeIndice = reads op :: [(Int, String)]
@@ -262,11 +264,18 @@ main = loop [] []
           nomeLogin <- getLine
           case encontrarUsuario nomeLogin usuarios of
             Just usuario -> do
-              putStrLn $ "Login bem-sucedido como " ++ getNome usuario
-              (novosUsuarios, novaCaixa) <- case usuario of
-                Paciente{} -> menuPaciente usuario caixa usuarios
-                Medico{} -> menuMedico usuario caixa usuarios
-              loop novosUsuarios novaCaixa
+              putStr "Digite sua senha: "
+              senhaLogin <- getLine
+              if getSenha usuario == senhaLogin
+                then do
+                  putStrLn $ "Login bem-sucedido como " ++ getNome usuario
+                  (novosUsuarios, novaCaixa) <- case usuario of
+                    Paciente{} -> menuPaciente usuario caixa usuarios
+                    Medico{} -> menuMedico usuario caixa usuarios
+                  loop novosUsuarios novaCaixa
+              else do
+                 putStrLn "Senha incorreta."
+                 loop usuarios caixa
             Nothing -> do
               putStrLn "Usuário não encontrado. Faça o cadastro primeiro."
               loop usuarios caixa

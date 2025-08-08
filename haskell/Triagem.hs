@@ -5,15 +5,18 @@ module Triagem (
   limpaSintoma,
   limpaListaSintomas,
   formataSaida,
-  Doenca
+  Doenca,
+  especialistas
 ) where
 
 import Data.List (nub, intercalate, sortBy)
 import Data.Ord (comparing, Down(..))
 import Data.Char (isSpace, toLower)
+import Data.Maybe (fromMaybe)
 
 type Doenca = String
 type Sintomas = [String]
+type Especialista = String
 
 doencas :: [(Doenca, Sintomas)]
 doencas = 
@@ -39,12 +42,40 @@ doencas =
    , ("Micose de pele", ["Coceira", "Manchas brancas ou vermelhas", "Descamacao", "Rachaduras na pele", "Ardencia"])
    ]
 
+especialistas :: [(Doenca, Especialista)]
+especialistas = 
+  [ ("Gripe", "Clínico Geral")
+  , ("Covid", "Clínico Geral, Infectologista")
+  , ("Herpes simples", "Dermatologista")
+  , ("Hepatite B", "Hepatologista, Infectologista")
+  , ("Hepatite C", "Hepatologista, Infectologista")
+  , ("Dengue", "Clínico Geral, Infectologista")
+  , ("Zika", "Clínico Geral, Infectologista")
+  , ("Chikungunya", "Clínico Geral, Reumatologista")
+  , ("Sarampo", "Pediatra, Infectologista")
+  , ("Varicela", "Dermatologista")
+  , ("Pneumonia bacteriana", "Pneumologista")
+  , ("Tuberculose", "Pneumologista, Infectologista")
+  , ("Infeccao urinaria (ITU)", "Urologista, Ginecologista")
+  , ("Gonorreia", "Infectologista, Urologista, Ginecologista")
+  , ("Sifilis", "Infectologista, Dermatologista")
+  , ("Meningite bacteriana", "Neurologista, Infectologista")
+  , ("Febre tifoide", "Gastroenterologista, Infectologista")
+  , ("Tetano", "Infectologista, Neurologista")
+  , ("Candidiase", "Ginecologista, Dermatologista")
+  , ("Micose de pele", "Dermatologista")
+  ]
+
+encontrarEspecialista :: Doenca -> Especialista
+encontrarEspecialista doenca =
+  fromMaybe "Especialista Indefinido" (lookup doenca especialistas)
+
 saida :: Sintomas -> IO()
 saida sintomas = putStr (formataSaida (triagem sintomas))
 
 formataSaida :: [(Doenca, Int, Int)] -> String
 formataSaida resultado = 
-   concat [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "%\n" | (doenca, qnt, pct) <- resultado]
+   concat [doenca ++ " - " ++ show qnt ++ " sintoma" ++ sufixo qnt ++ " - " ++ show pct ++ "% -> Consultar um(a) " ++ encontrarEspecialista doenca ++ "\n" | (doenca, qnt, pct) <- resultado]
 
 sufixo :: Int -> String
 sufixo 1 = ""
