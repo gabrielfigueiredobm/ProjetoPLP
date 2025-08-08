@@ -1,4 +1,4 @@
-# PROPOSTA DE PROJETO
+# PROJETO DA DISCIPLINA DE PARADIGMAS DE LINGUAGENS DE PROGRAMAÇÃO - SISTEMA DE TELEMEDICINA
 
 ## Participantes: Gabriel Figueiredo, Pedro Inocêncio e Kaiky Magno
 
