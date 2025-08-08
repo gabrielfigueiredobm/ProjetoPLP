@@ -91,10 +91,6 @@ usernameJaExiste :: String -> [Usuario] -> Bool
 usernameJaExiste usernameDesejado usuarios =
   any (\u -> getUsername u == usernameDesejado) usuarios
 
-senhaJaExiste :: String -> [Usuario] -> Bool
-senhaJaExiste senhaDesejada usuarios =
-  any (\u -> getSenha u == senhaDesejada) usuarios
-
 validarUsuario :: Usuario -> [Usuario] -> IO (Maybe Usuario)
 validarUsuario usuario usuarios = do
   if usernameJaExiste (getUsername usuario) usuarios
@@ -103,15 +99,9 @@ validarUsuario usuario usuarios = do
       putStr "Novo username: "
       novoUsername <- getLine
       validarUsuario (usuario { username = novoUsername }) usuarios
-    else if senhaJaExiste (getSenha usuario) usuarios
-      then do
-        putStrLn "Esta senha já está em uso. Por favor, escolha outra."
-        putStr "Nova senha: "
-        novaSenha <- getLine
-        validarUsuario (usuario { senha = novaSenha }) usuarios
-      else do
-        putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
-        return (Just usuario)
+    else do
+      putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
+      return (Just usuario)
 
 processarCadastro :: String -> [Usuario] -> IO (Maybe Usuario)
 processarCadastro tipo usuarios = do
