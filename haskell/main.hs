@@ -6,6 +6,9 @@ import Mensagem (Mensagem(..))
 import Triagem as T
 import CaixaDeMensagens as CM
 
+import Armazenamento
+
+import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout)
 import Data.List (nub, intercalate, find)
 import Data.Char (isSpace, toLower)
 import Control.Monad (when)
@@ -268,11 +271,15 @@ menuMedico usuario caixa usuarios = do
       menuMedico usuario caixa usuarios
 
 main :: IO ()
-main = loop [] []
+main = do
+  hSetBuffering stdout NoBuffering
+  usuarios <- carregarUsuarios "../database/usuarios.txt"
+  caixa    <- carregarMensagens "../database/mensagens.txt"
+  loop usuarios caixa
   where
-    loop :: [Usuario] -> [Mensagem] -> IO()
+    loop :: [Usuario] -> [Mensagem] -> IO ()
     loop usuarios caixa = do
-      putStrLn "\nBem-vindo ao sistema de triagem e mensagens médicas!"
+      putStrLn "\nBem-vindo ao nosso sistema de telemedicina!"
       putStrLn "Escolha uma opção:"
       putStrLn "1 - Cadastrar novo usuário"
       putStrLn "2 - Fazer login"
@@ -280,7 +287,7 @@ main = loop [] []
       putStr "Opção: "
       opc <- getLine
       case opc of
-        "1"-> do
+        "1" -> do
           putStrLn "Você deseja se cadastrar como:"
           putStrLn "1 - Paciente"
           putStrLn "2 - Médico"
@@ -291,16 +298,19 @@ main = loop [] []
               maybeNovoUsuario <- processarCadastro "Paciente" usuarios
               case maybeNovoUsuario of
                 Just novoUsuario -> do
-                  loop (novoUsuario : usuarios) caixa
-                Nothing -> do
-                  loop usuarios caixa
+                  let novaLista = novoUsuario : usuarios
+                  -- Salva após cadastro para não perder dados em caso de encerramento inesperado
+                  salvarUsuarios "../database/usuarios.txt" novaLista
+                  loop novaLista caixa
+                Nothing -> loop usuarios caixa
             "2" -> do
               maybeNovoUsuario <- processarCadastro "Medico" usuarios
               case maybeNovoUsuario of
                 Just novoUsuario -> do
-                  loop (novoUsuario : usuarios) caixa
-                Nothing -> do
-                  loop usuarios caixa
+                  let novaLista = novoUsuario : usuarios
+                  salvarUsuarios "../database/usuarios.txt" novaLista
+                  loop novaLista caixa
+                Nothing -> loop usuarios caixa
             _ -> do
               putStrLn "Opção inválida. Retornando ao menu principal sem cadastro."
               loop usuarios caixa
@@ -317,16 +327,21 @@ main = loop [] []
                   putStrLn $ "Login bem-sucedido como " ++ getNome usuario
                   (novosUsuarios, novaCaixa) <- case usuario of
                     Paciente{} -> iniciarMenuPaciente usuario caixa usuarios
-                    Medico{} -> iniciarMenuMedico usuario caixa usuarios
+                    Medico{}   -> iniciarMenuMedico usuario caixa usuarios
+                  -- NÃO salva aqui: espera usuário sair explicitamente para salvar
                   loop novosUsuarios novaCaixa
-              else do
-                 putStrLn "Senha incorreta."
-                 loop usuarios caixa
+                else do
+                  putStrLn "Senha incorreta."
+                  loop usuarios caixa
             Nothing -> do
               putStrLn "Usuário não encontrado. Faça o cadastro primeiro."
               loop usuarios caixa
 
-        "3" -> putStrLn "Encerrando o sistema. Até logo!"
+        "3" -> do
+          -- Salva tudo uma única vez antes de sair
+          salvarUsuarios "../database/usuarios.txt" usuarios
+          salvarMensagens "../database/mensagens.txt" caixa
+          putStrLn "Encerrando o sistema. Até logo!"
 
         _ -> do
           putStrLn "Opção inválida."

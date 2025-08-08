@@ -1,0 +1,1 @@
+[Paciente {nome = "g", cpf = "123", username = "g", senha = "123", mensagens = [], ultimosResultadosTriagem = []}]
