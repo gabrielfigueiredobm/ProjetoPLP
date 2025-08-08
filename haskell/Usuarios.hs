@@ -28,14 +28,21 @@ data Usuario
        triagens :: [String],
        mensagens :: [Mensagem]
      }
+   | Admin {
+       username :: String,
+       senha :: String
+     }
    deriving (Show, Eq, Read)
 
 getNome :: Usuario -> String
-getNome = nome
+getNome (Paciente nome _ _ _ _ _) = nome
+getNome (Medico nome _ _ _ _ _ _) = nome
+getNome (Admin username _) = "Administrador"
 
 getUsername :: Usuario -> String
 getUsername (Paciente _ _ username _ _ _) = username
 getUsername (Medico _ _ username _ _ _ _) = username
+getUsername (Admin username _) = username
 
 getMensagens :: Usuario -> [Mensagem]
 getMensagens = mensagens
@@ -47,3 +54,4 @@ getEspecialidade _ = "Não se aplica"
 getSenha :: Usuario -> String
 getSenha (Paciente _ _ _ senha _ _) = senha
 getSenha (Medico _ _ _ _ senha _ _) = senha
+getSenha (Admin _ senha) = senha

@@ -54,33 +54,50 @@ formatarListaSintomas sintomas =
 encontrarUsuario :: String -> [Usuario] -> Maybe Usuario
 encontrarUsuario nome = find (\u -> getUsername u == nome)
 
+lerEntradaNaoVazia :: String -> IO String
+lerEntradaNaoVazia prompt = do
+  putStr prompt
+  entrada <- getLine
+  if trim entrada == ""
+    then do
+      putStrLn "A entrada não pode ser vazia. Por favor, tente novamente."
+      lerEntradaNaoVazia prompt
+    else
+      return entrada
+
 cadastrarPaciente :: IO Usuario
 cadastrarPaciente = do
   putStrLn "Cadastro de Paciente"
-  putStr "Nome: "
-  nome <- getLine
-  putStr "CPF: "
-  cpf <- getLine
-  putStr "Username: "
-  username <- getLine
-  putStr "Senha: "
-  senha <- getLine
+  nome <- lerEntradaNaoVazia "Nome: "
+  cpf <- lerEntradaNaoVazia "CPF: "
+  username <- lerEntradaNaoVazia "Username: "
+  senha <- lerEntradaNaoVazia "Senha: "
   return $ Paciente nome cpf username senha [] []
+
+listarPacientes :: [Usuario] -> [Usuario]
+listarPacientes = filter isPaciente
+  where
+    isPaciente (Paciente _ _ _ _ _ _) = True
+    isPaciente _ = False
 
 cadastrarMedico :: IO Usuario
 cadastrarMedico = do
   putStrLn "Cadastro de Médico"
-  putStr "Nome: "
-  nome <- getLine
-  putStr "CRM: "
-  crm <- getLine
-  putStr "Username: "
-  username <- getLine
-  putStr "Especialidade: "
-  especialidade <- getLine
-  putStr "Senha: "
-  senha <- getLine
+  nome <- lerEntradaNaoVazia "Nome: "
+  crm <- lerEntradaNaoVazia "CRM: "
+  username <- lerEntradaNaoVazia "Username: "
+  especialidade <- lerEntradaNaoVazia "Especialidade: "
+  senha <- lerEntradaNaoVazia "Senha: "
   return $ Medico nome crm username especialidade senha [] []
+
+listarMedicos :: [Usuario] -> [Usuario]
+listarMedicos = filter isMedico
+  where
+    isMedico (Medico _ _ _ _ _ _ _) = True
+    isMedico _ = False
+
+removerUsuario :: String -> [Usuario] -> [Usuario]
+removerUsuario usernameParaApagar = filter (\u -> getUsername u /= usernameParaApagar)
 
 enviarMensagemParaCaixa :: Usuario -> Usuario -> [Mensagem] -> IO [Mensagem]
 enviarMensagemParaCaixa remetente destinatario caixa = do
@@ -135,7 +152,8 @@ menuMensagensPaciente usuario caixa usuarios = do
   putStrLn "1 - Ver caixa de mensagens"
   putStrLn "2 - Responder a uma mensagem (de um médico)"
   putStrLn "3 - Enviar uma nova mensagem (para um médico)"
-  putStrLn "4 - Voltar"
+  putStrLn "4 - Apagar uma mensagem"
+  putStrLn "5 - Voltar"
   putStr "Opção: "
   opc <- getLine
   case opc of
@@ -191,6 +209,26 @@ menuMensagensPaciente usuario caixa usuarios = do
               putStrLn "Opção inválida."
               menuMensagensPaciente usuario caixa usuarios
     "4" -> do
+      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      if null recebidas
+        then do
+          putStrLn "Sua caixa de mensagens está vazia."
+          menuMensagensPaciente usuario caixa usuarios
+        else do
+          putStrLn "Escolha a mensagem que deseja apagar (digite o número):"
+          mapM_ (\(i, m) -> putStrLn $ show i ++ " - De: " ++ remetente m ++ ", Texto: " ++ texto m) (zip [1..] recebidas)
+          putStr "Número da mensagem: "
+          op <- getLine
+          let maybeIndice = reads op :: [(Int, String)]
+          case maybeIndice of
+            [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
+              let novaCaixa = CM.apagarMensagem caixa (idx - 1)
+              putStrLn "Mensagem apagada com sucesso!"
+              menuMensagensPaciente usuario novaCaixa usuarios
+            _ -> do
+              putStrLn "Número inválido."
+              menuMensagensPaciente usuario caixa usuarios
+    "5" -> do
       putStrLn "Voltando ao menu principal..."
       menuPaciente usuario caixa usuarios
     _ -> do
@@ -238,7 +276,8 @@ menuMedico usuario caixa usuarios = do
   putStrLn "Escolha uma opção:"
   putStrLn "1 - Ver caixa de mensagens"
   putStrLn "2 - Responder a uma mensagem"
-  putStrLn "3 - Sair"
+  putStrLn "3 - Apagar uma mensagem"
+  putStrLn "4 - Sair"
   putStr "Opção: "
   opc <- getLine
   case opc of
@@ -280,12 +319,67 @@ menuMedico usuario caixa usuarios = do
             _ -> do
               putStrLn "Opção inválida."
               menuMedico usuario caixa usuarios
-    "3" -> do
+    "3" -> do 
+      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      if null recebidas
+        then do
+          putStrLn "Sua caixa de mensagens está vazia."
+          menuMedico usuario caixa usuarios
+        else do
+          putStrLn "Escolha a mensagem que deseja apagar (digite o número):"
+          mapM_ (\(i, m) -> putStrLn $ show i ++ " - De: " ++ remetente m ++ ", Texto: " ++ texto m) (zip [1..] recebidas)
+          putStr "Número da mensagem: "
+          op <- getLine
+          let maybeIndice = reads op :: [(Int, String)]
+          case maybeIndice of
+            [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
+              let novaCaixa = CM.apagarMensagem caixa (idx - 1)
+              putStrLn "Mensagem apagada com sucesso!"
+              menuMedico usuario novaCaixa usuarios
+            _ -> do
+              putStrLn "Número inválido."
+              menuMedico usuario caixa usuarios
+    "4" -> do
       putStrLn "Saindo do menu do médico..."
       return (usuarios, caixa)
     _ -> do
       putStrLn "Opção inválida, tente novamente."
       menuMedico usuario caixa usuarios
+
+adminMenu :: [Usuario] -> [Mensagem] -> IO ([Usuario], [Mensagem])
+adminMenu usuarios caixa = do
+  putStrLn "\n--- MENU DO ADMINISTRADOR ---"
+  putStrLn "Escolha uma opção:"
+  putStrLn "1 - Listar todos os usuários"
+  putStrLn "2 - Apagar qualquer cadastro (sem senha)"
+  putStrLn "3 - Sair"
+  putStr "Opção: "
+  opc <- getLine
+  case opc of
+    "1" -> do
+      putStrLn "\n--- LISTA COMPLETA DE USUÁRIOS ---"
+      if null usuarios
+        then putStrLn "Nenhum usuário cadastrado."
+        else mapM_ (\u -> putStrLn $ getNome u ++ " | Username: " ++ getUsername u) usuarios
+      adminMenu usuarios caixa
+    "2" -> do
+      putStrLn "--- Apagar um Cadastro ---"
+      putStr "Digite o nome de usuário do cadastro que deseja apagar: "
+      usernameParaApagar <- getLine
+      case encontrarUsuario usernameParaApagar usuarios of
+        Just usuarioParaApagar -> do
+          let novosUsuarios = removerUsuario usernameParaApagar usuarios
+          putStrLn $ "Cadastro de '" ++ getNome usuarioParaApagar ++ "' apagado com sucesso."
+          adminMenu novosUsuarios caixa
+        Nothing -> do
+          putStrLn "Usuário não encontrado."
+          adminMenu usuarios caixa
+    "3" -> do
+      putStrLn "Saindo do menu do administrador..."
+      return (usuarios, caixa)
+    _ -> do
+      putStrLn "Opção inválida."
+      adminMenu usuarios caixa
 
 runSistema :: IO ()
 runSistema = do
@@ -299,7 +393,9 @@ runSistema = do
       putStrLn "Escolha uma opção:"
       putStrLn "1 - Cadastrar novo usuário"
       putStrLn "2 - Fazer login"
-      putStrLn "3 - Sair"
+      putStrLn "3 - Listar cadastros"
+      putStrLn "4 - Apagar um cadastro"
+      putStrLn "5 - Sair"
       putStr "Opção: "
       opc <- getLine
       case opc of
@@ -329,33 +425,79 @@ runSistema = do
             _ -> do
               putStrLn "Opção inválida. Retornando ao menu principal sem cadastro."
               loop usuarios caixa
-
         "2" -> do
           putStr "Digite seu nome de usuário: "
           nomeLogin <- getLine
-          case encontrarUsuario nomeLogin usuarios of
-            Just usuario -> do
-              putStr "Digite sua senha: "
-              senhaLogin <- getLine
-              if getSenha usuario == senhaLogin
-                then do
-                  putStrLn $ "Login bem-sucedido como " ++ getNome usuario
-                  (novosUsuarios, novaCaixa) <- case usuario of
-                    Paciente{} -> iniciarMenuPaciente usuario caixa usuarios
-                    Medico{}   -> iniciarMenuMedico usuario caixa usuarios
-                  loop novosUsuarios novaCaixa
-                else do
-                  putStrLn "Senha incorreta."
-                  loop usuarios caixa
-            Nothing -> do
-              putStrLn "Usuário não encontrado. Faça o cadastro primeiro."
+          putStr "Digite sua senha: "
+          senhaLogin <- getLine
+          if nomeLogin == "Adm" && senhaLogin == "PIrs1234@"
+            then do
+              putStrLn "Login bem-sucedido como Administrador!"
+              (novosUsuarios, novaCaixa) <- adminMenu usuarios caixa
+              loop novosUsuarios novaCaixa
+            else case encontrarUsuario nomeLogin usuarios of
+              Just usuario -> do
+                if getSenha usuario == senhaLogin
+                  then do
+                    putStrLn $ "Login bem-sucedido como " ++ getNome usuario
+                    (novosUsuarios, novaCaixa) <- case usuario of
+                      Paciente{} -> iniciarMenuPaciente usuario caixa usuarios
+                      Medico{}   -> iniciarMenuMedico usuario caixa usuarios
+                    loop novosUsuarios novaCaixa
+                  else do
+                    putStrLn "Senha incorreta."
+                    loop usuarios caixa
+              Nothing -> do
+                putStrLn "Usuário não encontrado. Faça o cadastro primeiro."
+                loop usuarios caixa
+        "3" -> do 
+          putStrLn "--- Listar Cadastros ---"
+          putStrLn "Escolha o tipo de cadastro a ser listado:"
+          putStrLn "1 - Pacientes"
+          putStrLn "2 - Médicos"
+          putStr "Opção: "
+          opcListar <- getLine
+          case opcListar of
+            "1" -> do
+              putStrLn "\n--- Lista de Pacientes ---"
+              let pacientes = listarPacientes usuarios
+              if null pacientes
+                then putStrLn "Nenhum paciente cadastrado."
+                else mapM_ (\p -> putStrLn $ "Nome: " ++ getNome p ++ ", Username: " ++ getUsername p) pacientes
               loop usuarios caixa
-
-        "3" -> do
+            "2" -> do
+              putStrLn "\n--- Lista de Médicos ---"
+              let medicos = listarMedicos usuarios
+              if null medicos
+                then putStrLn "Nenhum médico cadastrado."
+                else mapM_ (\medico -> putStrLn $ "Dr(a). " ++ getNome medico ++ " - Especialidade: " ++ getEspecialidade medico ++ ", Username: " ++ getUsername medico) medicos
+              loop usuarios caixa
+            _ -> do
+              putStrLn "Opção inválida."
+              loop usuarios caixa
+        "4" -> do
+          putStrLn "--- Apagar um Cadastro ---"
+          putStr "Digite o nome de usuário do cadastro que deseja apagar: "
+          usernameParaApagar <- getLine
+          case encontrarUsuario usernameParaApagar usuarios of
+            Just usuarioParaApagar -> do
+              putStr "Digite a senha para confirmar a exclusão: "
+              senhaConfirmacao <- getLine
+              if getSenha usuarioParaApagar == senhaConfirmacao
+                then do
+                  let novosUsuarios = removerUsuario usernameParaApagar usuarios
+                  putStrLn $ "Cadastro de '" ++ usernameParaApagar ++ "' apagado com sucesso."
+                  loop novosUsuarios caixa
+              else do
+                putStrLn "Senha incorreta. A exclusão foi cancelada."
+                loop usuarios caixa
+            Nothing -> do
+              putStrLn "Usuário não encontrado."
+              loop usuarios caixa
+        "5" -> do
           salvarUsuarios "database/usuarios.txt" usuarios
           salvarMensagens "database/mensagens.txt" caixa
           putStrLn "Encerrando o sistema. Até logo!"
-
         _ -> do
           putStrLn "Opção inválida."
           loop usuarios caixa
