@@ -96,8 +96,11 @@ listarMedicos = filter isMedico
     isMedico (Medico _ _ _ _ _ _ _) = True
     isMedico _ = False
 
-removerUsuario :: String -> [Usuario] -> [Usuario]
-removerUsuario usernameParaApagar = filter (\u -> getUsername u /= usernameParaApagar)
+removerUsuarioECaixa :: String -> [Usuario] -> [Mensagem] -> ([Usuario], [Mensagem])
+removerUsuarioECaixa usernameParaApagar usuarios caixa =
+  let novosUsuarios = filter (\u -> getUsername u /= usernameParaApagar) usuarios
+      novaCaixa = filter (\m -> remetente m /= usernameParaApagar && destinatario m /= usernameParaApagar) caixa
+  in (novosUsuarios, novaCaixa)
 
 enviarMensagemParaCaixa :: Usuario -> Usuario -> [Mensagem] -> IO [Mensagem]
 enviarMensagemParaCaixa remetente destinatario caixa = do
@@ -374,7 +377,7 @@ adminMenu usuarios caixa = do
       usernameParaApagar <- getLine
       case encontrarUsuario usernameParaApagar usuarios of
         Just usuarioParaApagar -> do
-          let novosUsuarios = removerUsuario usernameParaApagar usuarios
+          let (novosUsuarios, novaCaixa) = removerUsuarioECaixa usernameParaApagar usuarios caixa
           putStrLn $ "Cadastro de '" ++ getNome usuarioParaApagar ++ "' apagado com sucesso."
           adminMenu novosUsuarios caixa
         Nothing -> do
@@ -491,9 +494,9 @@ runSistema = do
               senhaConfirmacao <- getLine
               if getSenha usuarioParaApagar == senhaConfirmacao
                 then do
-                  let novosUsuarios = removerUsuario usernameParaApagar usuarios
-                  putStrLn $ "Cadastro de '" ++ usernameParaApagar ++ "' apagado com sucesso."
-                  loop novosUsuarios caixa
+                  let (novosUsuarios, novaCaixa) = removerUsuarioECaixa usernameParaApagar usuarios caixa
+                  putStrLn $ "Cadastro de '" ++ getNome usuarioParaApagar ++ "' apagado com sucesso."
+                  loop novosUsuarios novaCaixa
               else do
                 putStrLn "Senha incorreta. A exclusão foi cancelada."
                 loop usuarios caixa
