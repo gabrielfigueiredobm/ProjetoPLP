@@ -2,20 +2,17 @@ module Sistema (runSistema) where
 
 import Usuarios (Usuario(..), getNome, getSenha, getEspecialidade, getUsername)
 import Mensagem (Mensagem(..))
-
 import Triagem as T
 import CaixaDeMensagens as CM
-
 import Armazenamento
 
-import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout)
 import Data.List (nub, intercalate, find)
 import Data.Char (isSpace, toLower)
 import Control.Monad (when)
 
 trim :: String -> String
 trim = f . f
-   where f = reverse . dropWhile isSpace
+    where f = reverse . dropWhile isSpace
 
 listaSintomasDisponiveis :: [String]
 listaSintomasDisponiveis =
@@ -41,7 +38,7 @@ splitOn c s =
 
 formatarListaSintomas :: [String] -> String
 formatarListaSintomas [] = ""
-formatarListaSintomas sintomas = 
+formatarListaSintomas sintomas =
   intercalate "\n" $ map formataLinha (chunksOf 5 sintomas)
     where
       formataLinha :: [String] -> String
@@ -96,13 +93,11 @@ listarMedicos = filter isMedico
     isMedico (Medico _ _ _ _ _ _ _) = True
     isMedico _ = False
 
+-- FUNÇÃO DE REMOÇÃO SIMPLIFICADA E CORRIGIDA
 removerUsuarioECaixa :: String -> [Usuario] -> [Mensagem] -> ([Usuario], [Mensagem])
 removerUsuarioECaixa usernameParaApagar usuarios caixa =
   let novosUsuarios = filter (\u -> getUsername u /= usernameParaApagar) usuarios
-      nomeParaApagar = case find (\u -> getUsername u == usernameParaApagar) usuarios of
-                         Just usuario -> getNome usuario
-                         Nothing    -> ""
-      novaCaixa = filter (\m -> remetente m /= nomeParaApagar && destinatario m /= nomeParaApagar) caixa
+      novaCaixa = filter (\m -> remetente m /= usernameParaApagar && destinatario m /= usernameParaApagar) caixa
   in (novosUsuarios, novaCaixa)
 
 enviarMensagemParaCaixa :: Usuario -> Usuario -> [Mensagem] -> IO [Mensagem]
@@ -134,17 +129,17 @@ validarUsuario usuario usuarios = do
     else if case usuario of
               Medico { crm = c } -> crmJaExiste c usuarios
               _ -> False
-         then do
-           putStrLn "Este CRM já está cadastrado. Por favor, informe outro."
-           putStr "Novo CRM: "
-           novoCrm <- getLine
-           case usuario of
-             Medico{nome=n, crm=_, username=u, especialidade=e, senha=s, triagens=t, mensagens=m} ->
-               validarUsuario (Medico n novoCrm u e s t m) usuarios
-             _ -> validarUsuario usuario usuarios
-         else do
-           putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
-           return (Just usuario)
+           then do
+             putStrLn "Este CRM já está cadastrado. Por favor, informe outro."
+             putStr "Novo CRM: "
+             novoCrm <- getLine
+             case usuario of
+               Medico{nome=n, crm=_, username=u, especialidade=e, senha=s, triagens=t, mensagens=m} ->
+                 validarUsuario (Medico n novoCrm u e s t m) usuarios
+               _ -> validarUsuario usuario usuarios
+           else do
+             putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
+             return (Just usuario)
 
 processarCadastro :: String -> [Usuario] -> IO (Maybe Usuario)
 processarCadastro tipo usuarios = do
@@ -165,14 +160,14 @@ menuMensagensPaciente usuario caixa usuarios = do
   case opc of
     "1" -> do
       putStrLn "\nCaixa de mensagens recebidas:"
-      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      let recebidas = filter (\m -> destinatario m == getUsername usuario) caixa
       if null recebidas
-        then putStrLn "Nenhuma mensagem na caixa de entrada"
+        then putStrLn "Nenhuma mensagem na caixa de entrada."
         else mapM_ putStrLn (CM.verMensagens recebidas)
       putStrLn ""
       menuMensagensPaciente usuario caixa usuarios
     "2" -> do
-      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      let recebidas = filter (\m -> destinatario m == getUsername usuario) caixa
       if null recebidas
         then do
           putStrLn "Você não tem mensagens para responder."
@@ -187,7 +182,7 @@ menuMensagensPaciente usuario caixa usuarios = do
             [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
               let mensagemOriginal = recebidas !! (idx - 1)
               let remetenteOriginal = remetente mensagemOriginal
-              case encontrarUsuario remetenteOriginal usuarios of
+              case find (\u -> getUsername u == remetenteOriginal) usuarios of
                 Just medico -> do
                   novaCaixa <- enviarMensagemParaCaixa usuario medico caixa
                   menuMensagensPaciente usuario novaCaixa usuarios
@@ -198,7 +193,7 @@ menuMensagensPaciente usuario caixa usuarios = do
               putStrLn "Opção inválida."
               menuMensagensPaciente usuario caixa usuarios
     "3" -> do
-      let medicos = [u | u@(Medico {}) <- usuarios, getNome u /= getNome usuario]
+      let medicos = [u | u@(Medico {}) <- usuarios, getUsername u /= getUsername usuario]
       if null medicos
         then do
           putStrLn "Não há médicos cadastrados para enviar mensagem."
@@ -218,7 +213,7 @@ menuMensagensPaciente usuario caixa usuarios = do
               putStrLn "Opção inválida."
               menuMensagensPaciente usuario caixa usuarios
     "4" -> do
-      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      let recebidas = filter (\m -> destinatario m == getUsername usuario) caixa
       if null recebidas
         then do
           putStrLn "Sua caixa de mensagens está vazia."
@@ -231,7 +226,8 @@ menuMensagensPaciente usuario caixa usuarios = do
           let maybeIndice = reads op :: [(Int, String)]
           case maybeIndice of
             [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
-              let novaCaixa = CM.apagarMensagem caixa (idx - 1)
+              let mensagemParaApagar = recebidas !! (idx - 1)
+              let novaCaixa = filter (/= mensagemParaApagar) caixa
               putStrLn "Mensagem apagada com sucesso!"
               menuMensagensPaciente usuario novaCaixa usuarios
             _ -> do
@@ -239,7 +235,7 @@ menuMensagensPaciente usuario caixa usuarios = do
               menuMensagensPaciente usuario caixa usuarios
     "5" -> do
       putStrLn "Voltando ao menu principal..."
-      menuPaciente usuario caixa usuarios
+      return (usuarios, caixa)
     _ -> do
       putStrLn "Opção inválida, tente novamente."
       menuMensagensPaciente usuario caixa usuarios
@@ -264,10 +260,11 @@ menuPaciente usuario caixa usuarios = do
       let resultados = T.triagem sintomas
       putStr (T.formataSaida resultados)
       let novoUsuario = usuario { ultimosResultadosTriagem = resultados }
-      let novosUsuarios = map (\u -> if getNome u == getNome usuario then novoUsuario else u) usuarios
+      let novosUsuarios = map (\u -> if getUsername u == getUsername usuario then novoUsuario else u) usuarios
       menuPaciente novoUsuario caixa novosUsuarios
     "2" -> do
-      menuMensagensPaciente usuario caixa usuarios
+      (novosUsuarios, novaCaixa) <- menuMensagensPaciente usuario caixa usuarios
+      menuPaciente usuario novaCaixa novosUsuarios
     "3" -> do
       putStrLn "Saindo do menu do usuário..."
       return (usuarios, caixa)
@@ -292,14 +289,14 @@ menuMedico usuario caixa usuarios = do
   case opc of
     "1" -> do
       putStrLn "\nCaixa de mensagens recebidas:"
-      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      let recebidas = filter (\m -> destinatario m == getUsername usuario) caixa
       if null recebidas
         then putStrLn "Nenhuma mensagem na caixa de entrada."
         else mapM_ putStrLn (CM.verMensagens recebidas)
       putStrLn ""
       menuMedico usuario caixa usuarios
     "2" -> do
-      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+      let recebidas = filter (\m -> destinatario m == getUsername usuario) caixa
       if null recebidas
         then do
           putStrLn "Você não tem mensagens para responder."
@@ -314,12 +311,12 @@ menuMedico usuario caixa usuarios = do
             [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
               let mensagemOriginal = recebidas !! (idx - 1)
               let remetenteOriginal = remetente mensagemOriginal
-              case find (\u -> getNome u == remetenteOriginal) usuarios of
+              case find (\u -> getUsername u == remetenteOriginal) usuarios of
                 Just paciente@(Paciente { ultimosResultadosTriagem = resultados }) -> do
                     when (not (null resultados)) $ do
-                        putStrLn "\n--- Últimos Resultados da Triagem do Paciente ---"
-                        putStrLn (T.formataSaida resultados)
-                        putStrLn "---------------------------------------------"
+                      putStrLn "\n--- Últimos Resultados da Triagem do Paciente ---"
+                      putStrLn (T.formataSaida resultados)
+                      putStrLn "---------------------------------------------"
                     novaCaixa <- enviarMensagemParaCaixa usuario paciente caixa
                     menuMedico usuario novaCaixa usuarios
                 Just _ -> do
@@ -331,8 +328,8 @@ menuMedico usuario caixa usuarios = do
             _ -> do
               putStrLn "Opção inválida."
               menuMedico usuario caixa usuarios
-    "3" -> do 
-      let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
+    "3" -> do
+      let recebidas = filter (\m -> destinatario m == getUsername usuario) caixa
       if null recebidas
         then do
           putStrLn "Sua caixa de mensagens está vazia."
@@ -345,7 +342,8 @@ menuMedico usuario caixa usuarios = do
           let maybeIndice = reads op :: [(Int, String)]
           case maybeIndice of
             [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
-              let novaCaixa = CM.apagarMensagem caixa (idx - 1)
+              let mensagemParaApagar = recebidas !! (idx - 1)
+              let novaCaixa = filter (/= mensagemParaApagar) caixa -- A MUDANÇA ESTÁ AQUI
               putStrLn "Mensagem apagada com sucesso!"
               menuMedico usuario novaCaixa usuarios
             _ -> do
@@ -373,6 +371,7 @@ adminMenu usuarios caixa = do
       if null usuarios
         then putStrLn "Nenhum usuário cadastrado."
         else mapM_ (\u -> putStrLn $ getNome u ++ " | Username: " ++ getUsername u) usuarios
+      putStrLn ""
       adminMenu usuarios caixa
     "2" -> do
       putStrLn "--- Apagar um Cadastro ---"
@@ -455,6 +454,7 @@ runSistema = do
                     (novosUsuarios, novaCaixa) <- case usuario of
                       Paciente{} -> iniciarMenuPaciente usuario caixa usuarios
                       Medico{}   -> iniciarMenuMedico usuario caixa usuarios
+                      _          -> return (usuarios, caixa)
                     loop novosUsuarios novaCaixa
                   else do
                     putStrLn "Senha incorreta."
@@ -462,7 +462,7 @@ runSistema = do
               Nothing -> do
                 putStrLn "Usuário não encontrado. Faça o cadastro primeiro."
                 loop usuarios caixa
-        "3" -> do 
+        "3" -> do
           putStrLn "--- Listar Cadastros ---"
           putStrLn "Escolha o tipo de cadastro a ser listado:"
           putStrLn "1 - Pacientes"
@@ -500,11 +500,13 @@ runSistema = do
               if getSenha usuarioParaApagar == senhaConfirmacao
                 then do
                   let (novosUsuarios, novaCaixa) = removerUsuarioECaixa (getUsername usuarioParaApagar) usuarios caixa
+                  salvarUsuarios "database/usuarios.txt" novosUsuarios
+                  salvarMensagens "database/mensagens.txt" novaCaixa
                   putStrLn $ "Cadastro de '" ++ getNome usuarioParaApagar ++ "' apagado com sucesso."
                   loop novosUsuarios novaCaixa
-              else do
-                putStrLn "Senha incorreta. A exclusão foi cancelada."
-                loop usuarios caixa
+                else do
+                  putStrLn "Senha incorreta. A exclusão foi cancelada."
+                  loop usuarios caixa
             Nothing -> do
               putStrLn "Usuário não encontrado."
               loop usuarios caixa

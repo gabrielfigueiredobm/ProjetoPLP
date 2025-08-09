@@ -4,12 +4,12 @@ module CaixaDeMensagens (
     apagarMensagem
 ) where
 
-import Usuarios (Usuario(..), getNome)
+import Usuarios (Usuario(..), getNome, getUsername)
 import Mensagem (Mensagem(..))
 
 enviarMensagem :: Usuario -> Usuario -> String -> [Mensagem] -> [Mensagem]
 enviarMensagem remetente destinatario texto caixa =
-  caixa ++ [Mensagem (getNome remetente) (getNome destinatario) texto]
+  caixa ++ [Mensagem (getNome remetente) (getUsername destinatario) texto]
 
 verMensagens :: [Mensagem] -> [String]
 verMensagens caixa =
