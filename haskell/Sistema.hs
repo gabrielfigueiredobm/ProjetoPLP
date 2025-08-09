@@ -99,7 +99,10 @@ listarMedicos = filter isMedico
 removerUsuarioECaixa :: String -> [Usuario] -> [Mensagem] -> ([Usuario], [Mensagem])
 removerUsuarioECaixa usernameParaApagar usuarios caixa =
   let novosUsuarios = filter (\u -> getUsername u /= usernameParaApagar) usuarios
-      novaCaixa = filter (\m -> remetente m /= usernameParaApagar && destinatario m /= usernameParaApagar) caixa
+      nomeParaApagar = case find (\u -> getUsername u == usernameParaApagar) usuarios of
+                         Just usuario -> getNome usuario
+                         Nothing    -> ""
+      novaCaixa = filter (\m -> remetente m /= nomeParaApagar && destinatario m /= nomeParaApagar) caixa
   in (novosUsuarios, novaCaixa)
 
 enviarMensagemParaCaixa :: Usuario -> Usuario -> [Mensagem] -> IO [Mensagem]
@@ -161,7 +164,7 @@ menuMensagensPaciente usuario caixa usuarios = do
   opc <- getLine
   case opc of
     "1" -> do
-      putStrLn "Caixa de mensagens recebidas:"
+      putStrLn "\nCaixa de mensagens recebidas:"
       let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
       if null recebidas
         then putStrLn "Nenhuma mensagem na caixa de entrada"
@@ -288,7 +291,7 @@ menuMedico usuario caixa usuarios = do
   opc <- getLine
   case opc of
     "1" -> do
-      putStrLn "Caixa de mensagens recebidas:"
+      putStrLn "\nCaixa de mensagens recebidas:"
       let recebidas = filter (\m -> destinatario m == getNome usuario) caixa
       if null recebidas
         then putStrLn "Nenhuma mensagem na caixa de entrada."
@@ -377,9 +380,9 @@ adminMenu usuarios caixa = do
       usernameParaApagar <- getLine
       case encontrarUsuario usernameParaApagar usuarios of
         Just usuarioParaApagar -> do
-          let (novosUsuarios, novaCaixa) = removerUsuarioECaixa usernameParaApagar usuarios caixa
+          let (novosUsuarios, novaCaixa) = removerUsuarioECaixa (getUsername usuarioParaApagar) usuarios caixa
           putStrLn $ "Cadastro de '" ++ getNome usuarioParaApagar ++ "' apagado com sucesso."
-          adminMenu novosUsuarios caixa
+          adminMenu novosUsuarios novaCaixa
         Nothing -> do
           putStrLn "Usuário não encontrado."
           adminMenu usuarios caixa
@@ -473,6 +476,7 @@ runSistema = do
               if null pacientes
                 then putStrLn "Nenhum paciente cadastrado."
                 else mapM_ (\p -> putStrLn $ "Nome: " ++ getNome p ++ ", Username: " ++ getUsername p) pacientes
+              putStrLn ""
               loop usuarios caixa
             "2" -> do
               putStrLn "\n--- Lista de Médicos ---"
@@ -480,6 +484,7 @@ runSistema = do
               if null medicos
                 then putStrLn "Nenhum médico cadastrado."
                 else mapM_ (\medico -> putStrLn $ "Dr(a). " ++ getNome medico ++ " - Especialidade: " ++ getEspecialidade medico ++ ", Username: " ++ getUsername medico) medicos
+              putStrLn ""
               loop usuarios caixa
             _ -> do
               putStrLn "Opção inválida."
@@ -494,7 +499,7 @@ runSistema = do
               senhaConfirmacao <- getLine
               if getSenha usuarioParaApagar == senhaConfirmacao
                 then do
-                  let (novosUsuarios, novaCaixa) = removerUsuarioECaixa usernameParaApagar usuarios caixa
+                  let (novosUsuarios, novaCaixa) = removerUsuarioECaixa (getUsername usuarioParaApagar) usuarios caixa
                   putStrLn $ "Cadastro de '" ++ getNome usuarioParaApagar ++ "' apagado com sucesso."
                   loop novosUsuarios novaCaixa
               else do
