@@ -64,3 +64,16 @@ Todas as doenças, sintomas e medidas preventivas ficam armazenados em uma estru
 
 * Por fim, espera-se que o médico sugira algum tratamento para o paciente e o atendimento se encerra.
 
+### Instalação
+
+* Certificar-se que tem o GHC instalado
+   ghc --version
+
+* Entrar no repositório correto
+   cd haskell
+
+* Compilar o programa
+   ghc main
+
+* Rodar o programa
+   ./main.exe
