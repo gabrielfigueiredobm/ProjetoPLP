@@ -67,13 +67,18 @@ Todas as doenças, sintomas e medidas preventivas ficam armazenados em uma estru
 ### Instalação
 
 * Certificar-se que tem o GHC instalado
-   ghc --version
-
+```
+ghc --version
+```
 * Entrar no repositório correto
-   cd haskell
-
+```
+cd haskell
+```
 * Compilar o programa
-   ghc main
-
+```
+ghc main
+```
 * Rodar o programa
-   ./main.exe
+```
+./main.exe
+```
