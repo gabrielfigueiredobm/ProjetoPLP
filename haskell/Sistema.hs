@@ -10,6 +10,8 @@ import Data.List (nub, intercalate, find)
 import Data.Char (isSpace, toLower)
 import Control.Monad (when)
 
+import System.IO
+
 trim :: String -> String
 trim = f . f
     where f = reverse . dropWhile isSpace
@@ -93,7 +95,6 @@ listarMedicos = filter isMedico
     isMedico (Medico _ _ _ _ _ _ _) = True
     isMedico _ = False
 
--- FUNÇÃO DE REMOÇÃO SIMPLIFICADA E CORRIGIDA
 removerUsuarioECaixa :: String -> [Usuario] -> [Mensagem] -> ([Usuario], [Mensagem])
 removerUsuarioECaixa usernameParaApagar usuarios caixa =
   let novosUsuarios = filter (\u -> getUsername u /= usernameParaApagar) usuarios
@@ -118,6 +119,12 @@ crmJaExiste crmDesejado usuarios =
                Medico { crm = c } -> c == crmDesejado
                _ -> False) usuarios
 
+cpfJaExiste :: String -> [Usuario] -> Bool
+cpfJaExiste cpfDesejado usuarios =
+  any (\u -> case u of
+            Paciente { cpf = c } -> c == cpfDesejado
+            _ -> False) usuarios
+
 validarUsuario :: Usuario -> [Usuario] -> IO (Maybe Usuario)
 validarUsuario usuario usuarios = do
   if usernameJaExiste (getUsername usuario) usuarios
@@ -127,19 +134,30 @@ validarUsuario usuario usuarios = do
       novoUsername <- getLine
       validarUsuario (usuario { username = novoUsername }) usuarios
     else if case usuario of
-              Medico { crm = c } -> crmJaExiste c usuarios
+              Paciente { cpf = c } -> cpfJaExiste c usuarios
               _ -> False
-           then do
-             putStrLn "Este CRM já está cadastrado. Por favor, informe outro."
-             putStr "Novo CRM: "
-             novoCrm <- getLine
-             case usuario of
-               Medico{nome=n, crm=_, username=u, especialidade=e, senha=s, triagens=t, mensagens=m} ->
-                 validarUsuario (Medico n novoCrm u e s t m) usuarios
-               _ -> validarUsuario usuario usuarios
-           else do
-             putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
-             return (Just usuario)
+            then do
+              putStrLn "Este CPF já está cadastrado. Por favor, informe outro."
+              putStr "Novo CPF: "
+              novoCpf <- getLine
+              case usuario of
+                Paciente {nome=n, cpf=_, username=u, senha=s, ultimosResultadosTriagem=t, mensagens=m} ->
+                  validarUsuario (Paciente n novoCpf u s m t) usuarios
+                _ -> validarUsuario usuario usuarios
+            else if case usuario of
+                      Medico { crm = c } -> crmJaExiste c usuarios
+                      _ -> False
+                    then do
+                      putStrLn "Este CRM já está cadastrado. Por favor, informe outro."
+                      putStr "Novo CRM: "
+                      novoCrm <- getLine
+                      case usuario of
+                        Medico{nome=n, crm=_, username=u, especialidade=e, senha=s, triagens=t, mensagens=m} ->
+                          validarUsuario (Medico n novoCrm u e s t m) usuarios
+                        _ -> validarUsuario usuario usuarios
+                    else do
+                      putStrLn $ "Usuário " ++ getNome usuario ++ " cadastrado com sucesso!"
+                      return (Just usuario)
 
 processarCadastro :: String -> [Usuario] -> IO (Maybe Usuario)
 processarCadastro tipo usuarios = do
@@ -362,7 +380,8 @@ adminMenu usuarios caixa = do
   putStrLn "Escolha uma opção:"
   putStrLn "1 - Listar todos os usuários"
   putStrLn "2 - Apagar qualquer cadastro (sem senha)"
-  putStrLn "3 - Sair"
+  putStrLn "3 - Mudar senha de um usuário"
+  putStrLn "4 - Sair"
   putStr "Opção: "
   opc <- getLine
   case opc of
@@ -386,6 +405,23 @@ adminMenu usuarios caixa = do
           putStrLn "Usuário não encontrado."
           adminMenu usuarios caixa
     "3" -> do
+      putStrLn "--- Mudar Senha do Usuário ---"
+      putStr "Digite o nome de usuário do cadastro que deseja mudar a senha: "
+      usernameParaMudarSenha <- getLine
+      case encontrarUsuario usernameParaMudarSenha usuarios of
+        Just usuarioEncontrado -> do
+          putStr "Digite a nova senha: "
+          novaSenha <- getLine
+          let novosUsuarios = map (\u -> if getUsername u == getUsername usuarioEncontrado
+                                        then u { senha = novaSenha }
+                                        else u) usuarios
+          putStrLn $ "A senha do usuário '" ++ getNome usuarioEncontrado ++ "' foi alterada com sucesso!"
+          salvarUsuarios "database/usuarios.txt" novosUsuarios
+          adminMenu novosUsuarios caixa
+        Nothing -> do
+          putStrLn "Usuário não encontrado."
+          adminMenu usuarios caixa
+    "4" -> do
       putStrLn "Saindo do menu do administrador..."
       return (usuarios, caixa)
     _ -> do
@@ -394,6 +430,9 @@ adminMenu usuarios caixa = do
 
 runSistema :: IO ()
 runSistema = do
+  hSetEncoding stdin utf8
+  hSetEncoding stdout utf8
+
   usuarios <- carregarUsuarios "database/usuarios.txt"
   caixa    <- carregarMensagens "database/mensagens.txt"
   loop usuarios caixa

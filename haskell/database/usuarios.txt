@@ -1,1 +1,1 @@
-[]
+[Medico {nome = "Pedro", crm = "123456", username = "Pedro", especialidade = "Clinico Geral", senha = "1234", triagens = [], mensagens = []}]

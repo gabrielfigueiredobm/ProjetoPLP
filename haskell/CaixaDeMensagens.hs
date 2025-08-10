@@ -9,7 +9,7 @@ import Mensagem (Mensagem(..))
 
 enviarMensagem :: Usuario -> Usuario -> String -> [Mensagem] -> [Mensagem]
 enviarMensagem remetente destinatario texto caixa =
-  caixa ++ [Mensagem (getNome remetente) (getUsername destinatario) texto]
+  caixa ++ [Mensagem (getUsername remetente) (getUsername destinatario) texto]
 
 verMensagens :: [Mensagem] -> [String]
 verMensagens caixa =
