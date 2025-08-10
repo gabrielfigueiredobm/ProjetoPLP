@@ -361,7 +361,7 @@ menuMedico usuario caixa usuarios = do
           case maybeIndice of
             [(idx, _)] | idx >= 1 && idx <= length recebidas -> do
               let mensagemParaApagar = recebidas !! (idx - 1)
-              let novaCaixa = filter (/= mensagemParaApagar) caixa -- A MUDANÇA ESTÁ AQUI
+              let novaCaixa = filter (/= mensagemParaApagar) caixa 
               putStrLn "Mensagem apagada com sucesso!"
               menuMedico usuario novaCaixa usuarios
             _ -> do
