@@ -21,11 +21,20 @@ cria_medico(+Nome, +Crm, +Senha, +Especialidade, -Medico) :-
         triagens: []
     }.
 
+cria_admin(+Username, +Senha, -Admin):-
+    Admin = admin{
+        username: Username,
+        senha: Senha
+    }.
+
 get_nome(Usuario, Nome) :-
     Nome = Usuario.nome.
 
 get_senha(Usuario, Senha) :-
     Senha = Usuario.senha.
+
+get_mensagens(Usuario, Mensagens):-
+    Mensagens = Usuario.mensagens.
 
 get_cpf(Usuario, Cpf) :-
     Cpf = Usuario.cpf.
