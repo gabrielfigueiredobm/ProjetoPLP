@@ -23,3 +23,9 @@ _build/
 *.so
 *.dll
 *.dylib
+
+#--prolog
+*.qlf
+*.po
+*.pl~ 
+*~
