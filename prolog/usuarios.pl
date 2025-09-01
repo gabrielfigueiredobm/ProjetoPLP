@@ -1,4 +1,4 @@
-:- module(usuarios, [cria_paciente/3, cria_medico/4, get_nome/2, get_cpf/2, get_crm/2, get_senha/2, get_especialidade/2]).
+:- module(usuarios, [cria_paciente/3, cria_medico/4, cria_admin/2, get_nome/2, get_cpf/2, get_crm/2, get_senha/2, get_especialidade/2, get_mensagens/2]).
 
 :- use_module(mensagem).
 
