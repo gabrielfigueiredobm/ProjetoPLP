@@ -70,7 +70,7 @@ Todas as doenças, sintomas e medidas preventivas ficam armazenados em uma estru
 
 ---
 
-### 5. **Instalação via terminal**
+### 5. **Instalação via terminal - Haskell**
 
 5.1. **Certificar-se que tem o GHC instalado:**
 ```bash
@@ -90,4 +90,23 @@ Todas as doenças, sintomas e medidas preventivas ficam armazenados em uma estru
 5.4. **Rodar o programa:**
 ```bash
    ./main.exe
+```
+
+---
+
+### 6. **Instalação via terminal - Prolog**
+
+6.1 **Certificar-se que tem o SWI-Prolog instalado:**
+```bash
+	swipl --version
+```
+
+6.2 **Entrar no repositório correto:**
+```bash
+	cd prolog
+```
+
+6.3 **Executar o programa:**
+```bash
+	swipl -s main.pl -g main -t halt
 ```
