@@ -1,0 +1,3 @@
+contador_id(paciente,7).
+contador_id(medico,7).
+contador_id(mensagem,11).
