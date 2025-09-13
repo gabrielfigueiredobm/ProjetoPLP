@@ -108,5 +108,6 @@ Todas as doenças, sintomas e medidas preventivas ficam armazenados em uma estru
 
 6.3 **Executar o programa:**
 ```bash
-	swipl -s main.pl -g main -t halt
+	swipl -q -f sistema.pl
+	?- iniciar.
 ```
