@@ -33,5 +33,5 @@ processar_main_opcao(1) :- fluxo_cadastrar, main_loop.
 processar_main_opcao(2) :- fluxo_login, main_loop.
 processar_main_opcao(3) :- fluxo_listar_cadastros, main_loop.
 processar_main_opcao(4) :- fluxo_apagar_cadastro_publico, main_loop.
-processar_main_opcao(5) :- writeln('Saindo do sistema. Até logo!').
+processar_main_opcao(5) :- writeln('Saindo do sistema. Até logo!'), halt.
 processar_main_opcao(_) :- writeln('Opção inválida. Tente novamente.'), main_loop.
